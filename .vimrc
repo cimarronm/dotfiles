@@ -1,3 +1,4 @@
+set mouse=a
 syntax on
 set cindent
 set hlsearch
@@ -9,4 +10,7 @@ set sw=4
 set expandtab
 set smartindent
 set smartcase
-
+"set number
+set laststatus=2
+set colorcolumn=80
+highlight ColorColumn ctermbg=black
