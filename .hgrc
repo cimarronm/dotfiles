@@ -1,0 +1,18 @@
+[ui]
+username = Cimarron Mittelsteadt <cimarronm@gmail.com>
+
+[extensions]
+color =
+hgext.graphlog =
+zeroconf =
+extdiff =
+churn =
+progress =
+shelve = /usr/local/share/hgext/hgshelve.py
+
+[extdiff]
+cmd.opendiff = opendiff-w
+
+[merge-tools]
+filemerge.executable = opendiff-w
+filemerge.args = $local $other -ancestor $base -merge $output

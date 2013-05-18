@@ -1,0 +1,10 @@
+[user]
+	name = Cimarron Mittelsteadt
+	email = cimarronm@gmail.com
+[color]
+	status = auto
+	branch = auto
+	ui = true
+[merge]
+	tool = opendiff
+[diff]
