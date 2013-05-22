@@ -8,7 +8,6 @@ zeroconf =
 extdiff =
 churn =
 progress =
-shelve = /usr/local/share/hgext/hgshelve.py
 
 [extdiff]
 cmd.opendiff = opendiff-w
