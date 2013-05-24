@@ -5,17 +5,22 @@ set mouse=a
 syntax on
 filetype indent plugin on
 
+" Autocompletion options
 set wildmode=list:longest
 set completeopt=menu,longest,preview
 
+" Automatically read files updated outside the editor
 set autoread
 
+" Turn on ruler
 set ruler
 
+" Search options
 set hlsearch
 set incsearch
 set smartcase
 
+" Indent spacing
 set tabstop=4
 set softtabstop=4
 set sw=4
@@ -48,3 +53,6 @@ autocmd InsertLeave * match ExtraWhitespace /\s\+$/
 " Taglist options
 let Tlist_Auto_Open = 1
 let Tlist_Exit_OnlyWindow = 1
+
+" Powerline
+set rtp+=/Library/Frameworks/Python.framework/Versions/3.3/lib/python3.3/site-packages/Powerline-beta-py3.3.egg/powerline/bindings/vim
