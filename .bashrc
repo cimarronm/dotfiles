@@ -4,5 +4,7 @@ fi
 
 export CLICOLOR=1;
 
-alias h='history'
-alias ll='ls -alF'
+if [ -f .aliases ]; then
+    . .aliases
+fi
+

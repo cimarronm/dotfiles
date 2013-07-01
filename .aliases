@@ -1,0 +1,4 @@
+alias h='history'
+alias ll='ls -alF'
+alias extract-dissector="python3 ~/Dropbox/utilities/extract-dissector.py"
+alias mem2out="python3 ~/Dropbox/utilities/mem2out.py"
