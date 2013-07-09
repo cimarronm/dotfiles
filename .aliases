@@ -2,3 +2,5 @@ alias h='history'
 alias ll='ls -alF'
 alias extract-dissector="python3 ~/Dropbox/utilities/extract-dissector.py"
 alias mem2out="python3 ~/Dropbox/utilities/mem2out.py"
+alias decode-rbm-delorean="python3 ~/Engineering\ Projects/pyvds/decode_rbm.py ~/delorean.rdf rbm.out 2 > rbm.txt"
+alias decode-diz-delorean="python3 ~/Engineering\ Projects/pyvds/decode_diz.py ~/delorean.rdf"
