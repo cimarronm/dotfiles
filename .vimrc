@@ -55,4 +55,4 @@ let Tlist_Auto_Open = 1
 let Tlist_Exit_OnlyWindow = 1
 
 " Powerline
-set rtp+=/Library/Frameworks/Python.framework/Versions/3.3/lib/python3.3/site-packages/Powerline-beta-py3.3.egg/powerline/bindings/vim
+set rtp+=/Library/Frameworks/Python.framework/Versions/3.3/lib/python3.3/site-packages/powerline/bindings/vim
