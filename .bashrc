@@ -14,4 +14,4 @@ if [ -f .aliases ]; then
     . .aliases
 fi
 
-pathadd "$HOME/Dropbox/mocaUtilities"
+pathadd "$HOME/projects/mocaUtilities"
