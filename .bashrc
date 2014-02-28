@@ -14,4 +14,6 @@ if [ -f .aliases ]; then
     . .aliases
 fi
 
-pathadd "$HOME/projects/mocaUtilities"
+if [ -f .projectsettings ]; then
+    . .projectsettings
+fi
