@@ -1,4 +1,2 @@
 alias h='history'
 alias ll='ls -alF'
-alias parse-text-dump="~/Dropbox/mocaUtilities/parseTextDump"
-alias setparamdir="export PARAM_DIR=~/Engineering\ Projects/moca/simulator/src/param"
