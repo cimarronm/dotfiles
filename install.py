@@ -1,6 +1,6 @@
 import os
 
-ignoredfiles = set((".git",__file__))
+ignoredfiles = set((".git",".gitignore",__file__))
 
 def installfile(file):
     os.symlink(os.path.relpath(file, start=os.path.expanduser("~")),
