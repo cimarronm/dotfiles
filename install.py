@@ -8,6 +8,7 @@ def installfile(file):
     print("{} installed".format(file))
 
 for file in os.listdir():
+    errors = False
     if file in ignoredfiles:
         continue
     try:
@@ -15,5 +16,10 @@ for file in os.listdir():
             print("{} is already installed".format(file))
         else:
             print("{} is different".format(file))
+            errors = True
     except FileNotFoundError:
         installfile(file)
+
+    if errors:
+        import sys
+        sys.exit(1)
