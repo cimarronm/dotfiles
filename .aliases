@@ -1,2 +1,4 @@
 alias h='history'
 alias ll='ls -alF'
+
+alias highstate='salt --state-output=changes \* state.highstate'
