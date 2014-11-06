@@ -1,1 +1,7 @@
 settings set target.prefer-dynamic-value run-target
+
+# Python utils
+
+command regex pyo 's/(.+)/expression -- (void) _PyObject_Dump(%1)/'
+command regex pyg 's/(.+)/expression -- (void) _PyGC_Dump(%1)/'
+command alias py-bt expression -- (void) _Py_DumpTraceback(2, PyThreadState_Get())
