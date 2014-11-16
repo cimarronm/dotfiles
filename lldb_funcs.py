@@ -26,18 +26,19 @@ def getCstr(commandInterpreter, valstr):
     else:
         return None
 
+
 def nsviewtree(debugger, command, result, internal_dict):
     '''
     Prints a debug view of the hierarchy of an NSView
     '''
-    parser = argparse.ArgumentParser(prog="nsviewtree")
+    parser = argparse.ArgumentParser(prog=__name__)
     parser.add_argument("object", help="object to dump nsview tree")
     args = parser.parse_args(shlex.split(command))
 
     ci = debugger.GetCommandInterpreter()
     ci.HandleCommand(
-         "po [{} _subtreeDescription]".format(args.object),
-         result
+        "po [{} _subtreeDescription]".format(args.object),
+        result
     )
     # import ctypes
     # AppKit = ctypes.CDLL(ctypes.util.find_library("AppKit"))
@@ -45,7 +46,7 @@ def nsviewtree(debugger, command, result, internal_dict):
     # NSBeep = AppKit.NSBeep
     # NSBeep.restype = None
     # NSBeep()
-#    print(result)
+    # print(result)
 
 
 def dumpselectors(debugger, command, result, internal_dict):
@@ -53,7 +54,7 @@ def dumpselectors(debugger, command, result, internal_dict):
     Prints out all selectors defined in an object (does not include superclass
     methods)
     '''
-    parser = argparse.ArgumentParser(prog="dumpselectors")
+    parser = argparse.ArgumentParser(prog=__name__)
     parser.add_argument("object", help="object to dump selectors on")
     args = parser.parse_args(shlex.split(command))
 
@@ -84,8 +85,8 @@ def dumpproperties(debugger, command, result, internal_dict):
     Prints out all properties for an object (does not include superclass
     properties)
     '''
-    parser = argparse.ArgumentParser(prog="dumpselectors")
-    parser.add_argument("object", help="object to dump selectors on")
+    parser = argparse.ArgumentParser(prog=__name__)
+    parser.add_argument("object", help="object to dump properties on")
     args = parser.parse_args(shlex.split(command))
 
     ci = debugger.GetCommandInterpreter()
@@ -117,6 +118,48 @@ def dumpproperties(debugger, command, result, internal_dict):
     )
 
 
+def dumpivars(debugger, command, result, internal_dict):
+    '''
+    Prints out all ivars for an object
+    '''
+    parser = argparse.ArgumentParser(prog=__name__)
+    parser.add_argument("object", help="object to dump ivars on")
+    args = parser.parse_args(shlex.split(command))
+
+    ci = debugger.GetCommandInterpreter()
+    ret = lldb.SBCommandReturnObject()
+
+    cls = getValue(ci, "[{} class]".format(args.object))
+    name = args.object
+    while cls:
+        clsname = getCstr(ci, "class_getName({})".format(cls))
+        name += "." + clsname
+        print >>result, name
+
+        # Using id as cannot seem to find type Ivar
+        debugger.HandleCommand(
+            "p unsigned int $n = 0; "
+            "id* $ivarps = (id*) class_copyIvarList((Class){}, &$n)"
+            "".format(cls)
+        )
+        nIvars = getValue(ci, "$n")
+        print >>result, "{} ivar{}".format(nIvars, 's' if nIvars > 1 else '')
+        for index in range(nIvars):
+            ivarname = getCstr(ci, "ivar_getName(*($ivarps+{}))".format(index))
+            ci.HandleCommand(
+                "po object_getIvar({}, *($ivarps+{}))".format(args.object,
+                                                              index),
+                ret
+            )
+            val = ret.GetOutput().strip()
+            print >>result, "{} = {}".format(ivarname, val)
+        debugger.HandleCommand(
+            "p (void) free($ivarps)"
+        )
+        print >>result
+        cls = getValue(ci, "[{} superclass]".format(cls))
+
+
 def printstdstring(debugger, command, result, internal_dict):
     '''
     Prints out a string from std::string object
@@ -142,13 +185,18 @@ def __lldb_init_module(debugger, internal_dict):
     Installs python-based commands in lldb
     '''
     def install_function(func):
+        '''
+        Installs lldb function
+        '''
         debugger.HandleCommand("command script add -f {0}.{1} "
                                "{1}".format(__name__, func.__name__))
         print('The "{}" python command has been installed and is ready '
               'for use.'.format(func.__name__))
 
-    install_function(nsviewtree)
-    install_function(dumpselectors)
-    install_function(dumpproperties)
     install_function(printstdstring)
 
+    install_function(nsviewtree)
+
+    install_function(dumpselectors)
+    install_function(dumpproperties)
+    install_function(dumpivars)
