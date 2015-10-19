@@ -213,4 +213,4 @@ def __lldb_init_module(debugger, internal_dict):
     install_function(dumpivars)
 
     if os.path.exists(fscript_framework):
-        install_function(fscript_framework)
+        install_function(fsa)
