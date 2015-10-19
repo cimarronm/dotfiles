@@ -3,6 +3,7 @@ import shlex
 import lldb
 import re
 import ctypes
+import os.path
 
 
 def getValue(commandInterpreter, valstr):
@@ -180,6 +181,16 @@ def printstdstring(debugger, command, result, internal_dict):
     print >>result, outstring
 
 
+def fsa(debugger, command, result, internal_dict):
+    '''
+    Installs F-script menu
+    '''
+    debugger.HandleCommand('expr (void) [[NSBundle bundleWithPath:@"{}"]'
+                           ' load]'.format(fscript_framework))
+    debugger.HandleCommand('expr (void) [FScriptMenuItem insertInMainMenu]')
+fscript_framework = '/Library/Frameworks/FScript.framework'
+
+
 def __lldb_init_module(debugger, internal_dict):
     '''
     Installs python-based commands in lldb
@@ -200,3 +211,6 @@ def __lldb_init_module(debugger, internal_dict):
     install_function(dumpselectors)
     install_function(dumpproperties)
     install_function(dumpivars)
+
+    if os.path.exists(fscript_framework):
+        install_function(fscript_framework)
