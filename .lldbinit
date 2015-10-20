@@ -7,4 +7,7 @@ command alias py-bt expression -- (void) _Py_DumpTraceback(2, (void *) PyThreadS
 
 # debug functions in python
 command script import ~/github/dotfiles/lldb_funcs.py
+command alias cc thread step-scripted -C lldb_funcs.ScriptedStepToCall
+command alias cb thread step-scripted -C lldb_funcs.ScriptedStepToBranch
+command alias csc thread step-scripted -C lldb_funcs.ScriptedStepToSyscall
 command script import ~/github/chisel/fblldb.py

@@ -191,6 +191,79 @@ def fsa(debugger, command, result, internal_dict):
 fscript_framework = '/Library/Frameworks/FScript.framework'
 
 
+class ScriptedStepBase:
+    def __init__(self, thread_plan, internal_dict):
+        self.thread_plan = thread_plan
+
+    def explains_stop(self, event):
+        ''' Returns true if this explains why the execution was halted '''
+        # We are stepping, so if we stop for any other reason, it isn't
+        # because of us.
+        if self.thread_plan.GetThread().GetStopReason() == lldb.eStopReasonTrace:
+            return True
+        else:
+            return False
+
+    def should_stop(self, event):
+        '''
+        Should debugger stop or continue
+        Notimplemented in base class
+        '''
+        return True
+
+    def should_step(self):
+        ''' Should be enabled '''
+        return True
+
+
+class ScriptedStepToCall(ScriptedStepBase):
+    def __init__(self, thread_plan, internal_dict):
+        self.thread_plan = thread_plan
+
+    def should_stop(self, event):
+        ''' Stop only when we have reached a call instruction '''
+        cur_pc = self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
+        target = self.thread_plan.GetThread().GetProcess().GetTarget()
+        instr = target.ReadInstructions(cur_pc, 1)[0]
+        if 'call' in instr.GetMnemonic(target):
+            self.thread_plan.SetPlanComplete(True)
+            return True
+        else:
+            return False
+
+
+class ScriptedStepToBranch(ScriptedStepBase):
+    def __init__(self, thread_plan, internal_dict):
+        self.thread_plan = thread_plan
+
+    def should_stop(self, event):
+        ''' Stop only when we have reached a branch instruction '''
+        cur_pc = self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
+        target = self.thread_plan.GetThread().GetProcess().GetTarget()
+        instr = target.ReadInstructions(cur_pc, 1)[0]
+        if instr.DoesBranch():
+            self.thread_plan.SetPlanComplete(True)
+            return True
+        else:
+            return False
+
+
+class ScriptedStepToSyscall(ScriptedStepBase):
+    def __init__(self, thread_plan, internal_dict):
+        self.thread_plan = thread_plan
+
+    def should_stop(self, event):
+        ''' Stop only when we have reached a call instruction '''
+        cur_pc = self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
+        target = self.thread_plan.GetThread().GetProcess().GetTarget()
+        instr = target.ReadInstructions(cur_pc, 1)[0]
+        if 'sys' in instr.GetMnemonic(target):
+            self.thread_plan.SetPlanComplete(True)
+            return True
+        else:
+            return False
+
+
 def __lldb_init_module(debugger, internal_dict):
     '''
     Installs python-based commands in lldb
