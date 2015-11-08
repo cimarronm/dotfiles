@@ -10,4 +10,6 @@ command script import ~/github/dotfiles/lldb_funcs.py
 command alias cc thread step-scripted -C lldb_funcs.ScriptedStepToCall
 command alias cb thread step-scripted -C lldb_funcs.ScriptedStepToBranch
 command alias csc thread step-scripted -C lldb_funcs.ScriptedStepToSyscall
+command alias cad thread step-scripted -C lldb_funcs.ScriptedStepToAntiDebug
+command alias ct thread step-scripted -C lldb_funcs.ScriptedStepToTarget
 command script import ~/github/chisel/fblldb.py

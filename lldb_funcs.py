@@ -2,6 +2,7 @@ import argparse
 import shlex
 import lldb
 import re
+import struct
 import ctypes
 import os.path
 
@@ -253,7 +254,7 @@ class ScriptedStepToSyscall(ScriptedStepBase):
         self.thread_plan = thread_plan
 
     def should_stop(self, event):
-        ''' Stop only when we have reached a call instruction '''
+        ''' Stop only when we have reached a system call instruction '''
         cur_pc = self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
         target = self.thread_plan.GetThread().GetProcess().GetTarget()
         instr = target.ReadInstructions(cur_pc, 1)[0]
@@ -262,6 +263,57 @@ class ScriptedStepToSyscall(ScriptedStepBase):
             return True
         else:
             return False
+
+
+class ScriptedStepToAntiDebug(ScriptedStepBase):
+    def __init__(self, thread_plan, internal_dict):
+        self.thread_plan = thread_plan
+        self.pushfSet = False
+
+    def should_stop(self, event):
+        ''' Stop only when we have reached a potential anti-debug instruction '''
+        cur_pc = self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
+        process = self.thread_plan.GetThread().GetProcess()
+        target = process.GetTarget()
+        instr = target.ReadInstructions(cur_pc, 1)[0]
+        if self.pushfSet:
+            error = lldb.SBError()
+            sp = self.thread_plan.GetThread().GetFrameAtIndex(0).GetSP()
+            flags = process.ReadUnsignedFromMemory(sp, 2, error)
+            flags &= 0xfeff  # mask off the trap flag
+            flagbytes = struct.pack('H', flags)
+            process.WriteMemory(sp, flagbytes, error)
+
+            # mask off the trap flag
+#            target.EvaluateExpression('*(unsigned short *)$rsp &= 0xfeff')
+            self.pushfSet = False
+            self.thread_plan.SetPlanComplete(True)
+            return True
+        if 'pushf' in instr.GetMnemonic(target):
+            self.pushfSet = True
+            self.thread_plan.SetPlanComplete(True)
+            return True
+        if 'rdtsc' in instr.GetMnemonic(target):
+            self.thread_plan.SetPlanComplete(True)
+            return True
+        return False
+
+
+class ScriptedStepToTarget(ScriptedStepBase):
+    def __init__(self, thread_plan, internal_dict):
+        self.thread_plan = thread_plan
+        target = self.thread_plan.GetThread().GetProcess().GetTarget()
+        text_section = target.GetModuleAtIndex(0).FindSection('__TEXT')
+        self.start_addr = text_section.GetLoadAddress(target)
+        self.end_addr = self.start_addr + text_section.GetByteSize()
+
+    def should_stop(self, event):
+        ''' Stop only when we have reached a certain PC range '''
+        cur_pc = self.thread_plan.GetThread().GetFrameAtIndex(0).GetPC()
+        if self.start_addr <= cur_pc < self.end_addr:
+            self.thread_plan.SetPlanComplete(True)
+            return True
+        return False
 
 
 def __lldb_init_module(debugger, internal_dict):
