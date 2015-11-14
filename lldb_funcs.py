@@ -162,6 +162,21 @@ def dumpivars(debugger, command, result, internal_dict):
         cls = getValue(ci, "[{} superclass]".format(cls))
 
 
+def printflags(debugger, command, result, internal_dict):
+    '''
+    Print flags in a readable format
+    '''
+    FLAGBITS = (('C', 0x1), ('P', 0x4), ('A', 0x10), ('Z', 0x49), ('S', 0x80),
+                ('T', 0x100), ('I', 0x200), ('D', 0x400), ('O', 0x800))
+    thread = debugger.GetSelectedTarget().GetProcess().GetSelectedThread()
+    sbregisters = thread.GetSelectedFrame().registers
+    regs = sbregisters.GetFirstValueByName('General Purpose Registers')
+    flags = regs.GetChildMemberWithName('flags').unsigned
+    for flagbit in FLAGBITS[::-1]:
+        result.write(flagbit[0] if flags & flagbit[1] else '.')
+    result.write('\n')
+
+
 def printstdstring(debugger, command, result, internal_dict):
     '''
     Prints out a string from std::string object
@@ -320,14 +335,18 @@ def __lldb_init_module(debugger, internal_dict):
     '''
     Installs python-based commands in lldb
     '''
-    def install_function(func):
+    def install_function(func, name=None):
         '''
         Installs lldb function
         '''
+        if not name:
+            name = func.__name__
         debugger.HandleCommand("command script add -f {0}.{1} "
-                               "{1}".format(__name__, func.__name__))
+                               "{2}".format(__name__, func.__name__, name))
         print('The "{}" python command has been installed and is ready '
               'for use.'.format(func.__name__))
+
+    install_function(printflags, 'flags')
 
     install_function(printstdstring)
 
