@@ -1,0 +1,34 @@
+import os
+
+$CLICOLOR = 1
+aliases['ll'] = 'ls -alF'
+
+
+def _setparamdir(args, stdin=None):
+    $PARAM_DIR = $HOME + '/Engineering Projects/moca/simulator/src/param'
+aliases['setparamdir'] = _setparamdir
+
+
+def _updaterepos(args, stdin=None):
+    cwd = os.getcwd()
+    import argparse
+    parser = argparse.ArgumentParser(prog=_updaterepos.__name__.lstrip('_'))
+    parser.add_argument("dir", help="directory", nargs='?')
+    args = parser.parse_args(args)
+    if args.dir:
+        if not os.path.exists(args.dir) or not os.path.isdir(args.dir):
+            return (None, 'Directory {} not found'.format(args.dir), 1)
+    else:
+        args.dir = '.'
+    for entry in os.scandir(args.dir):
+        if entry.is_dir():
+            cd @(entry.path)
+            if os.path.exists('.git'):
+                print('Updating {}'.format(entry.name))
+                git pull
+            elif os.path.exists('/.hg'):
+                print('Updating {}'.format(entry.name))
+                hg pull
+                hg update
+            cd @(cwd)
+aliases['updaterepos'] = _updaterepos
