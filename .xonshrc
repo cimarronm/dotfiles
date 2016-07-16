@@ -26,7 +26,7 @@ def _updaterepos(args, stdin=None):
             if os.path.exists('.git'):
                 print('Updating {}'.format(entry.name))
                 git pull
-            elif os.path.exists('/.hg'):
+            elif os.path.exists('.hg'):
                 print('Updating {}'.format(entry.name))
                 hg pull
                 hg update
