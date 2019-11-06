@@ -17,18 +17,21 @@ def _updaterepos(args, stdin=None):
     args = parser.parse_args(args)
     if args.dir:
         if not os.path.exists(args.dir) or not os.path.isdir(args.dir):
-            return (None, 'Directory {} not found'.format(args.dir), 1)
+            return (None, f'Directory {args.dir} not found', 1)
     else:
         args.dir = '.'
     for entry in os.scandir(args.dir):
         if entry.is_dir():
             cd @(entry.path)
             if os.path.exists('.git'):
-                print('Updating {}'.format(entry.name))
+                print(f'Updating {entry.name}')
                 git pull
             elif os.path.exists('.hg'):
-                print('Updating {}'.format(entry.name))
+                print(f'Updating {entry.name}')
                 hg pull
                 hg update
+            elif os.path.exists('.svn'):
+                print(f'Updating {entry.name}')
+                svn update
             cd @(cwd)
 aliases['updaterepos'] = _updaterepos
