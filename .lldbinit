@@ -1,4 +1,5 @@
 settings set target.prefer-dynamic-value run-target
+settings set target.x86-disassembly-flavor intel
 
 # Python utils
 command regex pyo 's/(.+)/expression -- (void) _PyObject_Dump(%1)/'
