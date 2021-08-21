@@ -1,6 +1,8 @@
-#!/usr/bin/python
-
-from __future__ import print_function
+#!/usr/bin/python3
+#
+# Script to install symbolic links for dot files/config files/etc. Used to maintain
+# a common shell configuration between machines
+# <cimarronm@gmail.com>
 
 import os
 import sys
@@ -19,7 +21,7 @@ def installfile(file, installdir):
 
 def do_install(installdir=os.path.expanduser("~"), dryrun=False):
     if not os.path.isdir(installdir):
-        log.error("Cannot install to {}. It is not a directory".format(installdir))
+        log.error(f"Cannot install to {installdir}. It is not a directory")
         raise RuntimeError("installdir is not directory")
 
     installs = []
@@ -31,15 +33,15 @@ def do_install(installdir=os.path.expanduser("~"), dryrun=False):
         try:
             if os.path.samefile(file, os.path.join(installdir, file)):
                 installed.append(file)
-                log.info("{} is already installed".format(file))
+                log.info("f{file} is already installed")
             else:
-                log.warning("Conflicting file {}".format(file))
+                log.warning(f"Conflicting file {file}")
                 conflicts.append(file)
         except OSError:  # FileNotFoundError: OSError instead for python 2 compatibility
             if not dryrun:
                 installfile(file, installdir)
             installs.append(file)
-            print("{} installed".format(file))
+            print(f"{file} installed")
 
     return dict(installs=installs, installed=installed, conflicts=conflicts)
 
@@ -49,7 +51,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     defaultinstall = os.path.expanduser("~")
     parser.add_argument("installpath",
-                        help="Path to install symbolic links (default:{})".format(defaultinstall),
+                        help=f"Path to install symbolic links (default:{defaultinstall})",
                         default=defaultinstall, nargs='?', type=os.path.expanduser)
     parser.add_argument("--log", help="log level", type=int)
     parser.add_argument("-n", "--dryrun", help="Perform dry run, don't actually do anything",
