@@ -13,6 +13,5 @@ command alias cb thread step-scripted -C lldb_funcs.ScriptedStepToBranch
 command alias csc thread step-scripted -C lldb_funcs.ScriptedStepToSyscall
 command alias cad thread step-scripted -C lldb_funcs.ScriptedStepToAntiDebug
 command alias ct thread step-scripted -C lldb_funcs.ScriptedStepToTarget
-command script import ~/github/chisel/fblldb.py
 
 # expr typedef long (*$func_type)(const char *, ...)
