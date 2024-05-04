@@ -33,8 +33,8 @@ set laststatus=2
 highlight Normal ctermfg=white ctermbg=black
 set background=dark
 
-" Set column marker for column 80
-set colorcolumn=80
+" Set column marker for column 90
+set colorcolumn=90
 highlight ColorColumn ctermbg=grey
 
 " Findall on current word
@@ -48,7 +48,11 @@ map <c-h> <c-w>h
 
 " Automatically tag line-ending whitespace
 highlight ExtraWhitespace ctermbg=red guibg=red
-autocmd InsertLeave * match ExtraWhitespace /\s\+$/
+autocmd InsertLeave,BufRead * match ExtraWhitespace /\s\+$/
+
+" Numbering lines
+set number
+set relativenumber
 
 " Taglist options
 let Tlist_Auto_Open = 1
