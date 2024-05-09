@@ -9,8 +9,8 @@ import os.path
 
 def getValue(commandInterpreter, valstr):
     ret = lldb.SBCommandReturnObject()
-    commandInterpreter.HandleCommand("p (unsigned long) {}".format(valstr),
-                                     ret)
+    commandInterpreter.HandleCommand(f"expr (unsigned long) {valstr}", ret)
+
     match = re.search(r"=\s*(\S*)", ret.GetOutput(), re.I)
     if match:
         return int(match.group(1), 0)
@@ -20,8 +20,8 @@ def getValue(commandInterpreter, valstr):
 
 def getCstr(commandInterpreter, valstr):
     ret = lldb.SBCommandReturnObject()
-    commandInterpreter.HandleCommand("p (char*) {}".format(valstr),
-                                     ret)
+    commandInterpreter.HandleCommand(f"expr (char*) {valstr}", ret)
+
     match = re.search(r'=[^"]*"(.*)"', ret.GetOutput(), re.I)
     if match:
         return match.group(1)
@@ -38,10 +38,7 @@ def nsviewtree(debugger, command, result, internal_dict):
     args = parser.parse_args(shlex.split(command))
 
     ci = debugger.GetCommandInterpreter()
-    ci.HandleCommand(
-        "po [{} _subtreeDescription]".format(args.object),
-        result
-    )
+    ci.HandleCommand(f"po [{args.object} _subtreeDescription]", result)
     # import ctypes
     # AppKit = ctypes.CDLL(ctypes.util.find_library("AppKit"))
     # AppKit.
@@ -62,23 +59,26 @@ def dumpselectors(debugger, command, result, internal_dict):
 
     ci = debugger.GetCommandInterpreter()
 
+    ret = lldb.SBCommandReturnObject()
+    ci.HandleCommand("expr --persistent-result false -- $n", ret)
+    ci.HandleCommand("expr --persistent-result false -- $methodps", ret)
+
     # Using id* as cannot seem to find type Method
     debugger.HandleCommand(
-        "p unsigned int $n = 0; "
-        "id* $methodps = (id*) class_copyMethodList((Class)[{} class], &$n)"
-        "".format(args.object)
+        "expr unsigned int $n = 0; "
+        f"id* $methodps = (id*) class_copyMethodList((Class)[(id){args.object} class], &$n)"
     )
 
     nSeletors = getValue(ci, "$n")
-    print >>result, "{} selectors".format(nSeletors)
+    print(f"{nSeletors} selectors", file=result)
     for index in range(nSeletors):
-        name = getCstr(ci, "method_getName(*($methodps+{}))".format(index))
+        name = getCstr(ci, f"method_getName(*($methodps+{index}))")
         address = getValue(
-            ci, "method_getImplementation(*($methodps+{}))".format(index))
-        print >>result, "{} (0x{:016x})".format(name, address)
+            ci, f"method_getImplementation(*($methodps+{index}))")
+        print(f"{name} (0x{address:016x})", file=result)
 
     debugger.HandleCommand(
-        "p (void) free($methodps)"
+        "expr (void) free($methodps)"
     )
 
 
@@ -93,30 +93,30 @@ def dumpproperties(debugger, command, result, internal_dict):
 
     ci = debugger.GetCommandInterpreter()
 
+    ret = lldb.SBCommandReturnObject()
+    ci.HandleCommand("expr --persistent-result false -- $n", ret)
+    ci.HandleCommand("expr --persistent-result false -- $propps", ret)
+
     # Using id* as cannot seem to find type Method
     debugger.HandleCommand(
-        "p unsigned int $n = 0; "
-        "id* $propps = (id*) class_copyPropertyList((Class)[{} class], &$n)"
-        "".format(args.object)
+        "expr unsigned int $n = 0; "
+        f"id* $propps = (id*) class_copyPropertyList((Class)[{args.object} class], &$n)"
     )
 
-    ret = lldb.SBCommandReturnObject()
-
     nProps = getValue(ci, "$n")
-    print >>result, "{} properties".format(nProps)
+    print("{nProps} properties", file=result)
     for index in range(nProps):
-        name = getCstr(ci, "property_getName(*($propps+{}))".format(index))
-        attr = getCstr(
-            ci, "property_getAttributes(*($propps+{}))".format(index))
+        name = getCstr(ci, f"property_getName(*($propps+{index}))")
+        attr = getCstr(ci, f"property_getAttributes(*($propps+{index}))")
         ci.HandleCommand(
-            "po [{} {}]".format(args.object, name),
+            f"po [{args.object} {name}]",
             ret
         )
         val = ret.GetOutput().strip()
-        print >>result, "{} ({}) = {}".format(name, attr, val)
+        print(f"{name} ({attr}) = {val}", file=result)
 
     debugger.HandleCommand(
-        "p (void) free($propps)"
+        "expr (void) free($propps)"
     )
 
 
@@ -131,35 +131,36 @@ def dumpivars(debugger, command, result, internal_dict):
     ci = debugger.GetCommandInterpreter()
     ret = lldb.SBCommandReturnObject()
 
-    cls = getValue(ci, "[{} class]".format(args.object))
+    cls = getValue(ci, f"[{args.object} class]")
     name = args.object
     while cls:
-        clsname = getCstr(ci, "class_getName({})".format(cls))
+        clsname = getCstr(ci, f"class_getName({cls})")
         name += "." + clsname
-        print >>result, name
+        print(name, file=result)
+
+        ci.HandleCommand("expr --persistent-result false -- $n", ret)
+        ci.HandleCommand("expr --persistent-result false -- $ivarps", ret)
 
         # Using id as cannot seem to find type Ivar
         debugger.HandleCommand(
-            "p unsigned int $n = 0; "
-            "id* $ivarps = (id*) class_copyIvarList((Class){}, &$n)"
-            "".format(cls)
+            "expr unsigned int $n = 0; "
+            f"id* $ivarps = (id*) class_copyIvarList((Class){cls}, &$n)"
         )
         nIvars = getValue(ci, "$n")
-        print >>result, "{} ivar{}".format(nIvars, 's' if nIvars > 1 else '')
+        print(f"{nIvars} ivar{'s' if nIvars>1 else ''}", file=result)
         for index in range(nIvars):
-            ivarname = getCstr(ci, "ivar_getName(*($ivarps+{}))".format(index))
+            ivarname = getCstr(ci, f"ivar_getName(*($ivarps+{index}))")
             ci.HandleCommand(
-                "po object_getIvar({}, *($ivarps+{}))".format(args.object,
-                                                              index),
+                f"po object_getIvar({args.object}, *($ivarps+{index}))",
                 ret
             )
             val = ret.GetOutput().strip()
-            print >>result, "{} = {}".format(ivarname, val)
+            print(f"{ivarname} = {val}", file=result)
         debugger.HandleCommand(
-            "p (void) free($ivarps)"
+            "expr (void) free($ivarps)"
         )
-        print >>result
-        cls = getValue(ci, "[{} superclass]".format(cls))
+        print(file=result)
+        cls = getValue(ci, f"[{cls} superclass]")
 
 
 def printflags(debugger, command, result, internal_dict):
@@ -188,13 +189,13 @@ def printstdstring(debugger, command, result, internal_dict):
 
     ci = debugger.GetCommandInterpreter()
 
-    pseudo_length = getValue(ci, "*(unsigned char*) {}".format(args.object))
+    pseudo_length = getValue(ci, f"*(unsigned char*) {args.object}")
     if pseudo_length & 1:
-        outstring = getCstr(ci, "*(char **) ({}+16)".format(args.object))
+        outstring = getCstr(ci, f"*(char **) ({args.object}+16)")
     else:
-        outstring = getCstr(ci, "({}+1)".format(args.object))
+        outstring = getCstr(ci, f"({args.object}+1)")
 
-    print >>result, outstring
+    print(outstring, file=result)
 
 
 def fsa(debugger, command, result, internal_dict):
