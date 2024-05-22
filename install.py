@@ -9,7 +9,7 @@ import sys
 import logging
 
 log = logging.getLogger(__name__)
-ignoredfiles = set((".git", ".gitignore", os.path.basename(__file__)))
+ignoredfiles = set((".git", ".gitignore", ".gitmodules", os.path.basename(__file__)))
 
 
 def installfile(file, installdir):
