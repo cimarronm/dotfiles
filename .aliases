@@ -1,4 +1,5 @@
 alias h='history'
 alias ll='ls -alF'
+alias diff='diff --color'
 
 alias highstate='salt --state-output=changes \* state.highstate'
