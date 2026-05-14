@@ -15,6 +15,6 @@
 [core]
 	excludesfile = /Users/cimarron/.gitignore_global
 [pull]
-	rebase = true
+	ff = true
 [submodule]
 	recurse = true
