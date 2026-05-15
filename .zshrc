@@ -1,5 +1,9 @@
 autoload compinit && compinit -i
 
+if command -v fastfetch &> /dev/null; then
+    fastfetch
+fi
+
 export CLICOLOR=1;
 
 if [ -f ~/.aliases ]; then
