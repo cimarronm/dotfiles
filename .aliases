@@ -1,5 +1,12 @@
 alias h='history'
 alias ll='ls -alF'
 alias diff='diff --color'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias grep='grep --color=auto'
+alias egrep='egrep --color=auto'
+alias less='less -R'
+alias mkdir='mkdir -p'
+alias mx='chmod a+x'
 
 alias highstate='salt --state-output=changes \* state.highstate'
