@@ -5,7 +5,7 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias grep='grep --color=auto'
 alias egrep='egrep --color=auto'
-alias less='less -R'
+alias less='less -iR'
 alias mkdir='mkdir -p'
 alias mx='chmod a+x'
 
