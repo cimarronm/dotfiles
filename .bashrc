@@ -25,3 +25,7 @@ fi
 if command -v starship &> /dev/null; then
     eval "$(starship init bash)"
 fi
+
+if command -v fzf &> /dev/null; then
+    source <(fzf --bash)
+fi
