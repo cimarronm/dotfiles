@@ -60,3 +60,5 @@ let Tlist_Exit_OnlyWindow = 1
 
 " Powerline
 set rtp+=/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/site-packages/powerline/bindings/vim
+
+cnoremap Ex NERDTreeFind
