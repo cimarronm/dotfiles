@@ -1,3 +1,5 @@
+let mapleader = " "
+
 " Enable mouse
 set mouse=a
 
@@ -38,7 +40,7 @@ set colorcolumn=90
 highlight ColorColumn ctermbg=grey
 
 " Findall on current word
-map <Leader>* :execute "vimgrep /\\<" . expand("<cword>") . "\\>/g **" <bar> cw <cr>
+map <leader>* :execute "vimgrep /\\<" . expand("<cword>") . "\\>/g **" <bar> cw <cr>
 
 " Window movement
 map <c-j> <c-w>j
@@ -61,4 +63,8 @@ let Tlist_Exit_OnlyWindow = 1
 " Powerline
 set rtp+=/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/site-packages/powerline/bindings/vim
 
+" Explore
 cnoremap Ex NERDTreeFind
+
+" FZF
+nnoremap <leader>f :FZF<cr>
