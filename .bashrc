@@ -10,6 +10,10 @@ pathadd() {
     fi
 }
 
+setwintitle() {
+    printf "\e]0;$USER@$HOSTNAME\a"
+}
+
 export CLICOLOR=1;
 
 if command -v fastfetch &> /dev/null; then
@@ -26,6 +30,7 @@ fi
 
 if command -v starship &> /dev/null; then
     eval "$(starship init bash)"
+    starship_precmd_user_func="setwintitle"
 fi
 
 if command -v fzf &> /dev/null; then
