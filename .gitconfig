@@ -5,16 +5,9 @@
 	status = auto
 	branch = auto
 	ui = true
-[merge]
-	tool = opendiff
-[diff]
-[push]
-	default = simple
-[credential]
-	helper = osxkeychain
 [core]
-	excludesfile = /Users/cimarron/.gitignore_global
+	excludesfile = ~/.gitignore_global
 [pull]
-	ff = true
+	ff = only
 [submodule]
 	recurse = true
