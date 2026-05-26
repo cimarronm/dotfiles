@@ -4,6 +4,8 @@ fi
 
 shopt -s histappend
 
+export EDITOR=vi
+
 pathadd() {
     if [ -d "$1" ] && [[ ":$PATH:" != *":$1:"* ]]; then
         PATH+=":$1"
