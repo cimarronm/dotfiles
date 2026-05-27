@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #
 # Script to install symbolic links for dot files/config files/etc. Used to maintain
 # a common shell configuration between machines
@@ -33,7 +33,7 @@ def do_install(installdir=os.path.expanduser("~"), dryrun=False):
         try:
             if os.path.samefile(file, os.path.join(installdir, file)):
                 installed.append(file)
-                log.info("f{file} is already installed")
+                log.info(f"{file} is already installed")
             else:
                 log.warning(f"Conflicting file {file}")
                 conflicts.append(file)
@@ -50,12 +50,19 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     defaultinstall = os.path.expanduser("~")
-    parser.add_argument("installpath",
-                        help=f"Path to install symbolic links (default:{defaultinstall})",
-                        default=defaultinstall, nargs='?', type=os.path.expanduser)
+    parser.add_argument(
+        "installpath",
+        help=f"Path to install symbolic links (default:{defaultinstall})",
+        default=defaultinstall,
+        nargs='?',
+        type=os.path.expanduser
+    )
     parser.add_argument("--log", help="log level", type=int)
-    parser.add_argument("-n", "--dryrun", help="Perform dry run, don't actually do anything",
-                        action="store_true")
+    parser.add_argument(
+        "-n", "--dryrun",
+        help="Perform dry run, don't actually do anything",
+        action="store_true"
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=args.log)
