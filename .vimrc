@@ -67,6 +67,9 @@ autocmd InsertLeave,BufRead * match ExtraWhitespace /\s\+$/
 set number
 set relativenumber
 
+" Scroll offset
+set scrolloff = 5
+
 " Taglist options
 let Tlist_Auto_Open = 1
 let Tlist_Exit_OnlyWindow = 1
