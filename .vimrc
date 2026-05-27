@@ -7,10 +7,11 @@ Plug 'ervandew/supertab'
 Plug 'preservim/nerdtree'
 Plug 'dense-analysis/ale'
 Plug 'junegunn/vim-easy-align'
+Plug 'github/copilot.vim'
 call plug#end()
 
 " Set Leader
-let mapleader = " "
+let mapleader=" "
 
 " Enable mouse
 set mouse=a
@@ -68,7 +69,7 @@ set number
 set relativenumber
 
 " Scroll offset
-set scrolloff = 5
+set scrolloff=5
 
 " Taglist options
 let Tlist_Auto_Open = 1
