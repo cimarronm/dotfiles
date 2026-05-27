@@ -1,3 +1,15 @@
+" Plugins
+call plug#begin()
+Plug 'junegunn/fzf'
+Plug 'junegunn/fzf.vim'
+Plug 'vim-airline/vim-airline'
+Plug 'ervandew/supertab'
+Plug 'preservim/nerdtree'
+Plug 'dense-analysis/ale'
+Plug 'junegunn/vim-easy-align'
+call plug#end()
+
+" Set Leader
 let mapleader = " "
 
 " Enable mouse
@@ -31,13 +43,12 @@ set expandtab
 " Always show statusbar
 set laststatus=2
 
-" Change to white on black colors
-highlight Normal ctermfg=white ctermbg=black
+" Change colors
 set background=dark
+colorscheme torte
 
 " Set column marker for column 90
 set colorcolumn=90
-highlight ColorColumn ctermbg=grey
 
 " Findall on current word
 map <leader>* :execute "vimgrep /\\<" . expand("<cword>") . "\\>/g **" <bar> cw <cr>
@@ -63,8 +74,16 @@ let Tlist_Exit_OnlyWindow = 1
 " Powerline
 set rtp+=/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/site-packages/powerline/bindings/vim
 
+" Quickly edit vimrc
+nnoremap ,v :edit   $MYVIMRC<CR>
+nnoremap ,u :source $MYVIMRC<CR>
+
+" EasyAlign
+xnoremap <leader>a <Plug>(EasyAlign)
+nnoremap <leader>a <Plug>(EasyAlign)
+
 " Explore
 cnoremap Ex NERDTreeFind
 
 " FZF
-nnoremap <leader>f :FZF<cr>
+nnoremap <leader>f :Files<cr>
