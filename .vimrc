@@ -7,6 +7,8 @@ Plug 'ervandew/supertab'
 Plug 'preservim/nerdtree'
 Plug 'dense-analysis/ale'
 Plug 'junegunn/vim-easy-align'
+Plug 'tpope/vim-surround'
+Plug 'tpope/vim-fugitive'
 Plug 'github/copilot.vim'
 call plug#end()
 
@@ -27,18 +29,22 @@ set completeopt=menu,longest,preview
 " Automatically read files updated outside the editor
 set autoread
 
+" Updatetime 
+set updatetime=300
+
 " Turn on ruler
 set ruler
 
 " Search options
 set hlsearch
 set incsearch
+set ignorecase
 set smartcase
 
 " Indent spacing
 set tabstop=4
 set softtabstop=4
-set sw=4
+set shiftwidth=4
 set expandtab
 
 " Always show statusbar
@@ -75,9 +81,6 @@ set scrolloff=5
 let Tlist_Auto_Open = 1
 let Tlist_Exit_OnlyWindow = 1
 
-" Powerline
-set rtp+=/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/site-packages/powerline/bindings/vim
-
 " Quickly edit vimrc
 nnoremap ,v :edit   $MYVIMRC<CR>
 nnoremap ,u :source $MYVIMRC<CR>
@@ -91,3 +94,4 @@ cnoremap Ex NERDTreeFind
 
 " FZF
 nnoremap <leader>f :Files<cr>
+nnoremap <leader>r :Rg<cr>
