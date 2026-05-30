@@ -29,7 +29,7 @@ set completeopt=menu,longest,preview
 " Automatically read files updated outside the editor
 set autoread
 
-" Updatetime 
+" Updatetime
 set updatetime=300
 
 " Turn on ruler
@@ -55,7 +55,7 @@ set background=dark
 colorscheme torte
 
 " Set column marker for column 90
-set colorcolumn=90
+set colorcolumn=100
 
 " Findall on current word
 map <leader>* :execute "vimgrep /\\<" . expand("<cword>") . "\\>/g **" <bar> cw <cr>
