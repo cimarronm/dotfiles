@@ -1,3 +1,3 @@
 export CLICOLOR=1
-export EDITOR=vima
+export EDITOR=vi
 export PAGER="less -iR"
