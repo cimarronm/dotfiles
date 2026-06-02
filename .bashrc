@@ -38,3 +38,7 @@ fi
 if command -v fzf &> /dev/null; then
     source <(fzf --bash)
 fi
+
+if command -v gh &> /dev/null; then
+    source <(gh completion -s bash)
+fi

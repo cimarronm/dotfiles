@@ -17,3 +17,7 @@ fi
 if command -v fzf &> /dev/null; then
     source <(fzf --zsh)
 fi
+
+if command -v gh &> /dev/null; then
+    source <(gh completion -s zsh)
+fi
