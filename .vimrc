@@ -91,6 +91,13 @@ nnoremap <leader>a <Plug>(EasyAlign)
 
 " Explore
 cnoremap Ex NERDTreeFind
+nnoremap <leader>nf :NERDTreeFind<CR>
+
+" Fugitive
+nnoremap <leader>gs :Git<CR>
+nnoremap <leader>gd :Gvdiffsplit<CR>
+nnoremap <leader>gb :Git blame<CR>
+nnoremap <leader>gc :Git commit<CR>
 
 " FZF
 nnoremap <leader>f :Files<cr>
