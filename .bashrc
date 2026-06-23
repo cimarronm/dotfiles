@@ -14,18 +14,8 @@ setwintitle() {
     printf "\e]0;$USER@$HOSTNAME\a"
 }
 
-export CLICOLOR=1;
-
 if command -v fastfetch &> /dev/null; then
     fastfetch
-fi
-
-if [ -f .aliases ]; then
-    . .aliases
-fi
-
-if [ -f .projectsettings ]; then
-    . .projectsettings
 fi
 
 if command -v starship &> /dev/null; then
@@ -39,4 +29,12 @@ fi
 
 if command -v gh &> /dev/null; then
     source <(gh completion -s bash)
+fi
+
+if [ -f ~/.aliases ]; then
+    . ~/.aliases
+fi
+
+if [ -f ~/.projectsettings ]; then
+    . ~/.projectsettings
 fi
