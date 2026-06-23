@@ -29,6 +29,9 @@ set completeopt=menu,longest,preview
 " Automatically read files updated outside the editor
 set autoread
 
+" Allow hidden buffers
+set hidden
+
 " Updatetime
 set updatetime=300
 
@@ -83,6 +86,7 @@ let Tlist_Exit_OnlyWindow = 1
 
 " Quickly edit vimrc
 nnoremap ,v :edit   $MYVIMRC<CR>
+nnoremap ,t :source $MYVIMRC \| PlugInstall<CR>
 nnoremap ,u :source $MYVIMRC<CR>
 
 " EasyAlign
@@ -98,6 +102,7 @@ nnoremap <leader>gs :Git<CR>
 nnoremap <leader>gd :Gvdiffsplit<CR>
 nnoremap <leader>gb :Git blame<CR>
 nnoremap <leader>gc :Git commit<CR>
+nnoremap <leader>gl :Git log<CR>
 
 " FZF
 nnoremap <leader>f :Files<cr>
