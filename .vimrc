@@ -57,7 +57,7 @@ highlight ExtraWhitespace ctermbg=red guibg=red
 autocmd InsertLeave,BufRead * match ExtraWhitespace /\s\+$/
 
 " General mappings
-map <leader>* :execute "vimgrep /\\<" . expand("<cword>") . "\\>/g **" <bar> cw <cr>
+nnoremap <leader>* :Rg <C-r><C-w><CR>
 map <c-j> <c-w>j
 map <c-k> <c-w>k
 map <c-l> <c-w>l
