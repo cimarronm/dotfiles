@@ -52,6 +52,36 @@ def is_gitignored(path):
     return result.returncode == 0
 
 
+def install_file(source_path, destination_path, label, installs, installed, conflicts, dryrun):
+    """Install a single symlink from source_path to destination_path."""
+    if link_points_to_source(destination_path, source_path):
+        installed.append(label)
+        log.info("%s is already installed", label)
+        return
+
+    if destination_path.exists() or destination_path.is_symlink():
+        log.warning("Conflicting file %s", label)
+        conflicts.append(label)
+        return
+
+    if dryrun:
+        print(f"{label} would be installed")
+    else:
+        destination_path.parent.mkdir(parents=True, exist_ok=True)
+        create_symlink(source_path, destination_path)
+        print(f"{label} installed")
+    installs.append(label)
+
+
+def collect_files(directory):
+    """Recursively yield all files under a directory."""
+    for child in sorted(directory.iterdir(), key=lambda p: p.name):
+        if child.is_dir():
+            yield from collect_files(child)
+        else:
+            yield child
+
+
 def do_install(installdir=Path.home(), dryrun=False):
     install_dir = Path(installdir).expanduser()
     if not install_dir.is_dir():
@@ -65,23 +95,19 @@ def do_install(installdir=Path.home(), dryrun=False):
         if source_path.name in IGNORED_FILES or is_gitignored(source_path):
             continue
 
-        destination_path = install_dir / source_path.name
-        if link_points_to_source(destination_path, source_path):
-            installed.append(source_path.name)
-            log.info("%s is already installed", source_path.name)
-            continue
-
-        if destination_path.exists() or destination_path.is_symlink():
-            log.warning("Conflicting file %s", source_path.name)
-            conflicts.append(source_path.name)
-            continue
-
-        if dryrun:
-            print(f"{source_path.name} would be installed")
+        if source_path.is_dir():
+            # For directories (e.g. .config/, .ssh/), symlink individual files
+            # rather than the directory itself, creating parent dirs as needed.
+            for source_file in collect_files(source_path):
+                relative = source_file.relative_to(SCRIPT_DIR)
+                if is_gitignored(source_file):
+                    continue
+                destination_path = install_dir / relative
+                label = str(relative)
+                install_file(source_file, destination_path, label, installs, installed, conflicts, dryrun)
         else:
-            create_symlink(source_path, destination_path)
-            print(f"{source_path.name} installed")
-        installs.append(source_path.name)
+            destination_path = install_dir / source_path.name
+            install_file(source_path, destination_path, source_path.name, installs, installed, conflicts, dryrun)
 
     return dict(installs=installs, installed=installed, conflicts=conflicts)
 
