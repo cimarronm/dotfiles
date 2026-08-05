@@ -49,9 +49,6 @@ set number
 set relativenumber
 set scrolloff=5
 
-" Clipboard
-set clipboard=unnamedplus
-
 " Whitespace highlighting
 highlight ExtraWhitespace ctermbg=red guibg=red
 autocmd InsertLeave,BufRead * match ExtraWhitespace /\s\+$/
