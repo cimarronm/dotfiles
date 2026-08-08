@@ -1,5 +1,5 @@
 export CLICOLOR=1
-export EDITOR=vi
+export EDITOR=vim
 export PAGER="less -iR"
 
 [[ -f ~/.bashrc ]] && . ~/.bashrc

@@ -83,3 +83,8 @@ nnoremap <leader>gl :Git log<CR>
 " FZF mappings
 nnoremap <leader>f :Files<CR>
 nnoremap <leader>r :Rg<CR>
+
+" Convenient command to see changes since last save
+if !exists(":DiffOrig")
+  command DiffOrig vert new | set bt=nofile | r ++edit # | 0d_ | diffthis | wincmd p | diffthis
+endif
