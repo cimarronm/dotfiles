@@ -15,6 +15,12 @@ Plug 'tpope/vim-surround'
 Plug 'vim-airline/vim-airline'
 call plug#end()
 
+" ALE
+let g:ale_linters = {
+\   'c':   ['clangd'],
+\   'cpp': ['clangd'],
+\ }
+
 " Core behavior
 syntax on
 filetype indent plugin on
