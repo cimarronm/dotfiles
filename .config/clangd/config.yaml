@@ -1,3 +1,15 @@
 Diagnostics:
   UnusedIncludes: Strict
   MissingIncludes: Strict
+  ClangTidy:
+    Add:
+      - bugprone-*
+      - performance-*
+      - readability-*
+      - modernize-*
+      - cppcoreguidelines-*
+      - misc-unused-parameters
+    Remove:
+      - modernize-use-trailing-return-type
+      - readability-braces-around-statements
+      - readability-identifier-length
