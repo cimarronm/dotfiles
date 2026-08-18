@@ -75,6 +75,10 @@ nnoremap ,u :source $MYVIMRC<CR>
 xnoremap <leader>a <Plug>(EasyAlign)
 nnoremap <leader>a <Plug>(EasyAlign)
 
+" ALE mappings
+nnoremap <leader>ca :ALECodeAction<CR>
+vnoremap <leader>ca :ALECodeAction<CR>
+
 " NERDTree mappings
 cnoremap Ex NERDTreeFind
 nnoremap <leader>nf :NERDTreeFind<CR>
