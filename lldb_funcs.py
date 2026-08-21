@@ -193,15 +193,40 @@ def printstdstring(debugger, command, result, internal_dict):
     # todo: add wchar detection
     parser = argparse.ArgumentParser(prog=__name__)
     parser.add_argument("object", help="std::string object")
+    parser.add_argument("--impl", choices=("libc++", "libstdc++"),
+                        help="force a standard-library layout instead of autodetecting")
     args = parser.parse_args(shlex.split(command))
 
-    pseudo_length = getValue(debugger, f"*(unsigned char*) {args.object}")
-    if pseudo_length & 1:
-        outstring = getCstr(debugger, f"*(char **) ({args.object}+16)")
+    impl = args.impl or _detect_stdstring_impl(debugger, args.object)
+    if impl == "libstdc++":
+        # first word points directly at the character data (SSO or heap)
+        outstring = getCstr(debugger, f"*(char **) ({args.object})")
     else:
-        outstring = getCstr(debugger, f"({args.object}+1)")
+        # libc++: low bit of the first byte flags a long (heap) string
+        pseudo_length = getValue(debugger, f"*(unsigned char*) {args.object}")
+        if pseudo_length & 1:
+            outstring = getCstr(debugger, f"*(char **) ({args.object}+16)")
+        else:
+            outstring = getCstr(debugger, f"({args.object}+1)")
 
     print(outstring, file=result)
+
+
+def _detect_stdstring_impl(debugger, obj):
+    '''
+    Guess the std::string layout by checking whether the first word is a
+    plausible data pointer (libstdc++) or an inline SSO byte (libc++).
+    '''
+    first_word = getValue(debugger, f"*(unsigned long *) ({obj})")
+    if first_word is None:
+        return "libc++"
+    # libstdc++'s _M_p either points into the object's own SSO buffer
+    # (obj+16) or to a separate heap allocation; either way it's a real,
+    # non-trivial pointer. libc++'s first word is a length/flags byte.
+    obj_addr = getValue(debugger, f"(unsigned long)({obj})")
+    if first_word == (obj_addr + 16) or first_word > 0x1000:
+        return "libstdc++"
+    return "libc++"
 
 
 def fsa(debugger, command, result, internal_dict):
@@ -268,7 +293,10 @@ class ScriptedStepToSyscall(ScriptedStepBase):
         cur_pc = self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
         target = self.thread_plan.GetThread().GetProcess().GetTarget()
         instr = target.ReadInstructions(cur_pc, 1)[0]
-        if 'sys' in instr.GetMnemonic(target):
+        mnemonic = instr.GetMnemonic(target)
+        # x86: syscall/sysenter/int 0x80; AArch64: svc
+        if mnemonic in ('syscall', 'sysenter', 'svc') or \
+                (mnemonic == 'int' and '0x80' in instr.GetOperands(target)):
             self.thread_plan.SetPlanComplete(True)
             return True
         else:
@@ -313,7 +341,9 @@ class ScriptedStepToTarget(ScriptedStepBase):
     def __init__(self, thread_plan, internal_dict):
         self.thread_plan = thread_plan
         target = self.thread_plan.GetThread().GetProcess().GetTarget()
-        text_section = target.GetModuleAtIndex(0).FindSection('__TEXT')
+        module = target.GetModuleAtIndex(0)
+        # __TEXT is the Mach-O code segment; .text the ELF code section
+        text_section = module.FindSection('__TEXT') or module.FindSection('.text')
         self.start_addr = text_section.GetLoadAddress(target)
         self.end_addr = self.start_addr + text_section.GetByteSize()
 

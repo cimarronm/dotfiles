@@ -2,6 +2,11 @@ settings set target.prefer-dynamic-value run-target
 settings set target.x86-disassembly-flavor intel
 settings set stop-disassembly-display always
 
+settings set history-file ~/.lldb_history
+settings set target.max-children-count 512
+settings set target.max-string-summary-length 4096
+settings set thread-format "thread #${thread.index}: tid=${thread.id}{, ${frame.pc}}{ ${module.file.basename}`${function.name-with-args}}{ at ${line.file.basename}:${line.number}}{, stop reason = ${thread.stop-reason}}\n"
+
 # Python utils
 command regex pyo 's/(.+)/expression -- (void) _PyObject_Dump(%1)/'
 command regex pyg 's/(.+)/expression -- (void) _PyGC_Dump(%1)/'
