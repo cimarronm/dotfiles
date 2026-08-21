@@ -1,32 +1,25 @@
 import argparse
 import shlex
 import lldb
-import re
 import struct
 import ctypes
 import os.path
 
 
-def getValue(commandInterpreter, valstr):
-    ret = lldb.SBCommandReturnObject()
-    commandInterpreter.HandleCommand(f"expr (unsigned long) {valstr}", ret)
-
-    match = re.search(r"=\s*(\S*)", ret.GetOutput(), re.I)
-    if match:
-        return int(match.group(1), 0)
-    else:
-        return None
+def getValue(debugger, valstr):
+    target = debugger.GetSelectedTarget()
+    result = target.EvaluateExpression(f"(unsigned long)({valstr})")
+    if result.IsValid() and result.GetError().Success():
+        return result.GetValueAsUnsigned()
+    return None
 
 
-def getCstr(commandInterpreter, valstr):
-    ret = lldb.SBCommandReturnObject()
-    commandInterpreter.HandleCommand(f"expr (char*) {valstr}", ret)
-
-    match = re.search(r'=[^"]*"(.*)"', ret.GetOutput(), re.I)
-    if match:
-        return match.group(1)
-    else:
-        return None
+def getCstr(debugger, valstr):
+    target = debugger.GetSelectedTarget()
+    result = target.EvaluateExpression(f"(char *)({valstr})")
+    if result.IsValid() and result.GetError().Success():
+        return result.GetSummary()
+    return None
 
 
 def nsviewtree(debugger, command, result, internal_dict):
@@ -57,29 +50,26 @@ def dumpselectors(debugger, command, result, internal_dict):
     parser.add_argument("object", help="object to dump selectors on")
     args = parser.parse_args(shlex.split(command))
 
-    ci = debugger.GetCommandInterpreter()
-
-    ret = lldb.SBCommandReturnObject()
-    ci.HandleCommand("expr --persistent-result false -- $n", ret)
-    ci.HandleCommand("expr --persistent-result false -- $methodps", ret)
+    target = debugger.GetSelectedTarget()
+    process = target.GetProcess()
+    error = lldb.SBError()
+    count_addr = process.AllocateMemory(4, lldb.ePermissionsReadable | lldb.ePermissionsWritable, error)
 
     # Using id* as cannot seem to find type Method
-    debugger.HandleCommand(
-        "expr unsigned int $n = 0; "
-        f"id* $methodps = (id*) class_copyMethodList((Class)[(id){args.object} class], &$n)"
+    expr_result = target.EvaluateExpression(
+        f"(id*) class_copyMethodList((Class)[(id){args.object} class], (unsigned int*){count_addr})"
     )
+    ptr = expr_result.GetValueAsUnsigned()
+    n = process.ReadUnsignedFromMemory(count_addr, 4, error)
+    process.DeallocateMemory(count_addr, error)
 
-    nSeletors = getValue(ci, "$n")
-    print(f"{nSeletors} selectors", file=result)
-    for index in range(nSeletors):
-        name = getCstr(ci, f"method_getName(*($methodps+{index}))")
-        address = getValue(
-            ci, f"method_getImplementation(*($methodps+{index}))")
+    print(f"{n} selectors", file=result)
+    for index in range(n):
+        name = getCstr(debugger, f"method_getName(((id*){ptr})[{index}])")
+        address = getValue(debugger, f"method_getImplementation(((id*){ptr})[{index}])")
         print(f"{name} (0x{address:016x})", file=result)
 
-    debugger.HandleCommand(
-        "expr (void) free($methodps)"
-    )
+    target.EvaluateExpression(f"(void) free((void*){ptr})")
 
 
 def dumpproperties(debugger, command, result, internal_dict):
@@ -91,33 +81,26 @@ def dumpproperties(debugger, command, result, internal_dict):
     parser.add_argument("object", help="object to dump properties on")
     args = parser.parse_args(shlex.split(command))
 
-    ci = debugger.GetCommandInterpreter()
+    target = debugger.GetSelectedTarget()
+    process = target.GetProcess()
+    error = lldb.SBError()
+    count_addr = process.AllocateMemory(4, lldb.ePermissionsReadable | lldb.ePermissionsWritable, error)
 
-    ret = lldb.SBCommandReturnObject()
-    ci.HandleCommand("expr --persistent-result false -- $n", ret)
-    ci.HandleCommand("expr --persistent-result false -- $propps", ret)
-
-    # Using id* as cannot seem to find type Method
-    debugger.HandleCommand(
-        "expr unsigned int $n = 0; "
-        f"id* $propps = (id*) class_copyPropertyList((Class)[{args.object} class], &$n)"
+    expr_result = target.EvaluateExpression(
+        f"(id*) class_copyPropertyList((Class)[{args.object} class], (unsigned int*){count_addr})"
     )
+    ptr = expr_result.GetValueAsUnsigned()
+    n = process.ReadUnsignedFromMemory(count_addr, 4, error)
+    process.DeallocateMemory(count_addr, error)
 
-    nProps = getValue(ci, "$n")
-    print(f"{nProps} properties", file=result)
-    for index in range(nProps):
-        name = getCstr(ci, f"property_getName(*($propps+{index}))")
-        attr = getCstr(ci, f"property_getAttributes(*($propps+{index}))")
-        ci.HandleCommand(
-            f"po [{args.object} {name}]",
-            ret
-        )
-        val = ret.GetOutput().strip()
+    print(f"{n} properties", file=result)
+    for index in range(n):
+        name = getCstr(debugger, f"property_getName(((id*){ptr})[{index}])")
+        attr = getCstr(debugger, f"property_getAttributes(((id*){ptr})[{index}])")
+        val = target.EvaluateExpression(f"[{args.object} {name}]").GetObjectDescription() or ''
         print(f"{name} ({attr}) = {val}", file=result)
 
-    debugger.HandleCommand(
-        "expr (void) free($propps)"
-    )
+    target.EvaluateExpression(f"(void) free((void*){ptr})")
 
 
 def dumpivars(debugger, command, result, internal_dict):
@@ -128,39 +111,37 @@ def dumpivars(debugger, command, result, internal_dict):
     parser.add_argument("object", help="object to dump ivars on")
     args = parser.parse_args(shlex.split(command))
 
-    ci = debugger.GetCommandInterpreter()
-    ret = lldb.SBCommandReturnObject()
+    target = debugger.GetSelectedTarget()
+    process = target.GetProcess()
 
-    cls = getValue(ci, f"[{args.object} class]")
+    cls = getValue(debugger, f"[{args.object} class]")
     name = args.object
     while cls:
-        clsname = getCstr(ci, f"class_getName({cls})")
+        clsname = getCstr(debugger, f"class_getName({cls})")
         name += "." + clsname
         print(name, file=result)
 
-        ci.HandleCommand("expr --persistent-result false -- $n", ret)
-        ci.HandleCommand("expr --persistent-result false -- $ivarps", ret)
-
+        error = lldb.SBError()
+        count_addr = process.AllocateMemory(4, lldb.ePermissionsReadable | lldb.ePermissionsWritable, error)
         # Using id as cannot seem to find type Ivar
-        debugger.HandleCommand(
-            "expr unsigned int $n = 0; "
-            f"id* $ivarps = (id*) class_copyIvarList((Class){cls}, &$n)"
+        expr_result = target.EvaluateExpression(
+            f"(id*) class_copyIvarList((Class){cls}, (unsigned int*){count_addr})"
         )
-        nIvars = getValue(ci, "$n")
-        print(f"{nIvars} ivar{'s' if nIvars>1 else ''}", file=result)
-        for index in range(nIvars):
-            ivarname = getCstr(ci, f"ivar_getName(*($ivarps+{index}))")
-            ci.HandleCommand(
-                f"po object_getIvar({args.object}, *($ivarps+{index}))",
-                ret
-            )
-            val = ret.GetOutput().strip()
+        ptr = expr_result.GetValueAsUnsigned()
+        n = process.ReadUnsignedFromMemory(count_addr, 4, error)
+        process.DeallocateMemory(count_addr, error)
+
+        print(f"{n} ivar{'s' if n>1 else ''}", file=result)
+        for index in range(n):
+            ivarname = getCstr(debugger, f"ivar_getName(((id*){ptr})[{index}])")
+            val = target.EvaluateExpression(
+                f"object_getIvar({args.object}, ((id*){ptr})[{index}])"
+            ).GetObjectDescription() or ''
             print(f"{ivarname} = {val}", file=result)
-        debugger.HandleCommand(
-            "expr (void) free($ivarps)"
-        )
+
+        target.EvaluateExpression(f"(void) free((void*){ptr})")
         print(file=result)
-        cls = getValue(ci, f"[{cls} superclass]")
+        cls = getValue(debugger, f"[{cls} superclass]")
 
 
 def printflags(debugger, command, result, internal_dict):
@@ -214,13 +195,11 @@ def printstdstring(debugger, command, result, internal_dict):
     parser.add_argument("object", help="std::string object")
     args = parser.parse_args(shlex.split(command))
 
-    ci = debugger.GetCommandInterpreter()
-
-    pseudo_length = getValue(ci, f"*(unsigned char*) {args.object}")
+    pseudo_length = getValue(debugger, f"*(unsigned char*) {args.object}")
     if pseudo_length & 1:
-        outstring = getCstr(ci, f"*(char **) ({args.object}+16)")
+        outstring = getCstr(debugger, f"*(char **) ({args.object}+16)")
     else:
-        outstring = getCstr(ci, f"({args.object}+1)")
+        outstring = getCstr(debugger, f"({args.object}+1)")
 
     print(outstring, file=result)
 
@@ -243,10 +222,7 @@ class ScriptedStepBase:
         ''' Returns true if this explains why the execution was halted '''
         # We are stepping, so if we stop for any other reason, it isn't
         # because of us.
-        if self.thread_plan.GetThread().GetStopReason() == lldb.eStopReasonTrace:
-            return True
-        else:
-            return False
+        return self.thread_plan.GetThread().GetStopReason() == lldb.eStopReasonTrace
 
     def should_stop(self, event):
         '''
@@ -261,9 +237,6 @@ class ScriptedStepBase:
 
 
 class ScriptedStepToCall(ScriptedStepBase):
-    def __init__(self, thread_plan, internal_dict):
-        self.thread_plan = thread_plan
-
     def should_stop(self, event):
         ''' Stop only when we have reached a call instruction '''
         cur_pc = self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
@@ -277,9 +250,6 @@ class ScriptedStepToCall(ScriptedStepBase):
 
 
 class ScriptedStepToBranch(ScriptedStepBase):
-    def __init__(self, thread_plan, internal_dict):
-        self.thread_plan = thread_plan
-
     def should_stop(self, event):
         ''' Stop only when we have reached a branch instruction '''
         cur_pc = self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
@@ -293,9 +263,6 @@ class ScriptedStepToBranch(ScriptedStepBase):
 
 
 class ScriptedStepToSyscall(ScriptedStepBase):
-    def __init__(self, thread_plan, internal_dict):
-        self.thread_plan = thread_plan
-
     def should_stop(self, event):
         ''' Stop only when we have reached a system call instruction '''
         cur_pc = self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
@@ -310,7 +277,7 @@ class ScriptedStepToSyscall(ScriptedStepBase):
 
 class ScriptedStepToAntiDebug(ScriptedStepBase):
     def __init__(self, thread_plan, internal_dict):
-        self.thread_plan = thread_plan
+        super().__init__(thread_plan, internal_dict)
         self.pushfSet = False
 
     def should_stop(self, event):
