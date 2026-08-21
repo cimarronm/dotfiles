@@ -25,3 +25,6 @@ set print frame-arguments all
 
 # Backtraces
 set backtrace past-main on
+
+# Python helper commands
+source ~/gdb_funcs.py
