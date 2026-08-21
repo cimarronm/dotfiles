@@ -104,7 +104,7 @@ def dumpproperties(debugger, command, result, internal_dict):
     )
 
     nProps = getValue(ci, "$n")
-    print("{nProps} properties", file=result)
+    print(f"{nProps} properties", file=result)
     for index in range(nProps):
         name = getCstr(ci, f"property_getName(*($propps+{index}))")
         attr = getCstr(ci, f"property_getAttributes(*($propps+{index}))")
@@ -165,17 +165,44 @@ def dumpivars(debugger, command, result, internal_dict):
 
 def printflags(debugger, command, result, internal_dict):
     '''
-    Print flags in a readable format
+    Print x86-64 RFLAGS or AArch64 CPSR/PSTATE flags in a readable format
     '''
-    FLAGBITS = (('C', 0x1), ('P', 0x4), ('A', 0x10), ('Z', 0x40), ('S', 0x80),
-                ('T', 0x100), ('I', 0x200), ('D', 0x400), ('O', 0x800))
+    DIM = '\x1b[90m'
+    RESET = '\x1b[39m'
+    X86_FLAGBITS = (
+        ('CF', 0), ('PF', 2), ('AF', 4), ('ZF', 6), ('SF', 7),
+        ('TF', 8), ('IF', 9), ('DF', 10), ('OF', 11), ('NT', 14),
+        ('RF', 16), ('VM', 17), ('AC', 18), ('VIF', 19), ('VIP', 20),
+        ('ID', 21),
+    )
+    AARCH64_FLAGBITS = (
+        ('F', 6), ('I', 7), ('A', 8), ('D', 9), ('IL', 20), ('SS', 21),
+        ('V', 28), ('C', 29), ('Z', 30), ('N', 31),
+    )
     thread = debugger.GetSelectedTarget().GetProcess().GetSelectedThread()
-    sbregisters = thread.GetSelectedFrame().registers
-    regs = sbregisters.GetFirstValueByName('General Purpose Registers')
-    flags = regs.GetChildMemberWithName('flags').unsigned
-    for flagbit in FLAGBITS[::-1]:
-        result.write(flagbit[0] if flags & flagbit[1] else '.')
-    result.write('\n')
+    frame = thread.GetSelectedFrame()
+    rflags = frame.FindRegister('rflags')
+    cpsr = frame.FindRegister('cpsr')
+
+    if rflags.IsValid():
+        flags = rflags.unsigned
+        flagbits = X86_FLAGBITS
+        extra_fields = [(7, f"IOPL={(flags >> 12) & 0x3}")]
+    elif cpsr.IsValid():
+        flags = cpsr.unsigned
+        flagbits = AARCH64_FLAGBITS
+        extra_fields = []
+    else:
+        result.write('flags: no rflags or cpsr register in the selected frame\n')
+        return
+
+    rendered_flags = [
+        name if flags & (1 << bit) else f"{DIM}{name}{RESET}"
+        for name, bit in reversed(flagbits)
+    ]
+    for index, field in extra_fields:
+        rendered_flags.insert(index, field)
+    result.write(' '.join(rendered_flags) + '\n')
 
 
 def printstdstring(debugger, command, result, internal_dict):

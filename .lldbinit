@@ -1,5 +1,6 @@
 settings set target.prefer-dynamic-value run-target
 settings set target.x86-disassembly-flavor intel
+settings set stop-disassembly-display always
 
 # Python utils
 command regex pyo 's/(.+)/expression -- (void) _PyObject_Dump(%1)/'
@@ -7,11 +8,9 @@ command regex pyg 's/(.+)/expression -- (void) _PyGC_Dump(%1)/'
 command alias py-bt expression -- (void) _Py_DumpTraceback(2, (void *) PyThreadState_Get())
 
 # debug functions in python
-command script import ~/github/dotfiles/lldb_funcs.py
+command script import -c lldb_funcs.py
 command alias cc thread step-scripted -C lldb_funcs.ScriptedStepToCall
 command alias cb thread step-scripted -C lldb_funcs.ScriptedStepToBranch
 command alias csc thread step-scripted -C lldb_funcs.ScriptedStepToSyscall
 command alias cad thread step-scripted -C lldb_funcs.ScriptedStepToAntiDebug
 command alias ct thread step-scripted -C lldb_funcs.ScriptedStepToTarget
-
-# expr typedef long (*$func_type)(const char *, ...)
