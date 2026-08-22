@@ -1,0 +1,42 @@
+name: Lint
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: check --output-format=github
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Discover and check shell scripts
+        run: |
+          mapfile -t files < <(
+            find . -type d -name .git -prune -o -type f -print | while read -r f; do
+              case "$f" in
+                *.sh|*.bash) echo "$f"; continue;;
+                ./.zshrc|./.zprofile|./.zshenv|./.zlogin|./.zlogout|./.xonshrc) continue;;
+              esac
+              read -r first < "$f" 2>/dev/null || continue
+              case "$first" in
+                '#!'*sh|'#!'*sh\ *|'#!'*bash|'#!'*bash\ *) echo "$f"; continue;;
+              esac
+              case "$f" in
+                ./.bashrc|./.bash_profile|./.bash_login|./.bash_logout|./.profile|./.aliases|./.functions) echo "$f";;
+              esac
+            done | sort -u
+          )
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No shell scripts found."
+            exit 0
+          fi
+          printf 'Checking: %s\n' "${files[*]}"
+          shellcheck --shell=bash --exclude=SC1090,SC1091 "${files[@]}"

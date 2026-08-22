@@ -11,7 +11,7 @@ pathadd() {
 }
 
 setwintitle() {
-    printf "\e]0;$USER@$HOSTNAME\a"
+    printf '\e]0;%s@%s\a' "$USER" "$HOSTNAME"
 }
 
 if command -v fastfetch &> /dev/null; then
@@ -20,6 +20,7 @@ fi
 
 if command -v starship &> /dev/null; then
     eval "$(starship init bash)"
+    # shellcheck disable=SC2034  # consumed by starship's precmd hook
     starship_precmd_user_func="setwintitle"
 fi
 
