@@ -1,9 +1,9 @@
 import argparse
-import shlex
-import lldb
-import struct
-import ctypes
 import os.path
+import shlex
+import struct
+
+import lldb
 
 
 def getValue(debugger, valstr):
@@ -233,8 +233,8 @@ def fsa(debugger, command, result, internal_dict):
     '''
     Installs F-script menu
     '''
-    debugger.HandleCommand('expr (void) [[NSBundle bundleWithPath:@"{}"]'
-                           ' load]'.format(fscript_framework))
+    debugger.HandleCommand(f'expr (void) [[NSBundle bundleWithPath:@"{fscript_framework}"]'
+                           ' load]')
     debugger.HandleCommand('expr (void) [FScriptMenuItem insertInMainMenu]')
 fscript_framework = '/Library/Frameworks/FScript.framework'
 
@@ -366,10 +366,10 @@ def __lldb_init_module(debugger, internal_dict):
         '''
         if not name:
             name = func.__name__
-        debugger.HandleCommand("command script add -f {0}.{1} "
-                               "{2}".format(__name__, func.__name__, name))
-        print('The "{}" python command has been installed and is ready '
-              'for use.'.format(func.__name__))
+        debugger.HandleCommand(f"command script add -f {__name__}.{func.__name__} "
+                               f"{name}")
+        print(f'The "{func.__name__}" python command has been installed and is ready '
+              'for use.')
 
     install_function(printflags, 'flags')
 

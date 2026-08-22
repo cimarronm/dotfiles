@@ -7,9 +7,9 @@
 import argparse
 import logging
 import os
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 log = logging.getLogger(__name__)
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -82,7 +82,9 @@ def collect_files(directory):
             yield child
 
 
-def do_install(installdir=Path.home(), dryrun=False):
+def do_install(installdir=None, dryrun=False):
+    if installdir is None:
+        installdir = Path.home()
     install_dir = Path(installdir).expanduser()
     if not install_dir.is_dir():
         log.error("Cannot install to %s. It is not a directory", install_dir)
@@ -109,7 +111,7 @@ def do_install(installdir=Path.home(), dryrun=False):
             destination_path = install_dir / source_path.name
             install_file(source_path, destination_path, source_path.name, installs, installed, conflicts, dryrun)
 
-    return dict(installs=installs, installed=installed, conflicts=conflicts)
+    return {"installs": installs, "installed": installed, "conflicts": conflicts}
 
 
 if __name__ == "__main__":

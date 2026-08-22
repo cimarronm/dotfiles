@@ -37,7 +37,7 @@ class PrintFlags(gdb.Command):
 
         if flags is not None:
             flagbits = self.X86_FLAGBITS
-            extra_fields = [(7, "IOPL={}".format((flags >> 12) & 0x3))]
+            extra_fields = [(7, f"IOPL={(flags >> 12) & 0x3}")]
         else:
             flags = self._read_register('cpsr')
             if flags is None:
@@ -47,7 +47,7 @@ class PrintFlags(gdb.Command):
             extra_fields = []
 
         rendered_flags = [
-            name if flags & (1 << bit) else "{}{}{}".format(self.DIM, name, self.RESET)
+            name if flags & (1 << bit) else f"{self.DIM}{name}{self.RESET}"
             for name, bit in reversed(flagbits)
         ]
         for index, field in extra_fields:
@@ -83,23 +83,23 @@ class PrintStdString(gdb.Command):
         impl = impl or self._detect_impl(obj)
         if impl == 'libstdc++':
             # first word points directly at the character data (SSO or heap)
-            outstring = _cstr('*(char **)({})'.format(obj))
+            outstring = _cstr(f'*(char **)({obj})')
         else:
             # libc++: low bit of the first byte flags a long (heap) string
-            pseudo_length = _uval('*(unsigned char*)({})'.format(obj))
+            pseudo_length = _uval(f'*(unsigned char*)({obj})')
             if pseudo_length is not None and pseudo_length & 1:
-                outstring = _cstr('*(char **)(({})+16)'.format(obj))
+                outstring = _cstr(f'*(char **)(({obj})+16)')
             else:
-                outstring = _cstr('(char *)(({})+1)'.format(obj))
+                outstring = _cstr(f'(char *)(({obj})+1)')
         print(outstring)
 
     def _detect_impl(self, obj):
         '''Guess the std::string layout by checking whether the first word is a
         plausible data pointer (libstdc++) or an inline SSO byte (libc++).'''
-        first_word = _uval('*(unsigned long *)({})'.format(obj))
+        first_word = _uval(f'*(unsigned long *)({obj})')
         if first_word is None:
             return 'libc++'
-        obj_addr = _uval('(unsigned long)({})'.format(obj))
+        obj_addr = _uval(f'(unsigned long)({obj})')
         # libstdc++'s _M_p either points into the object's own SSO buffer
         # (obj+16) or to a separate heap allocation; either way it's a real,
         # non-trivial pointer. libc++'s first word is a length/flags byte.
@@ -110,14 +110,14 @@ class PrintStdString(gdb.Command):
 
 def _uval(expr):
     try:
-        return int(gdb.parse_and_eval('(unsigned long)({})'.format(expr))) & 0xffffffffffffffff
+        return int(gdb.parse_and_eval(f'(unsigned long)({expr})')) & 0xffffffffffffffff
     except gdb.error:
         return None
 
 
 def _cstr(expr):
     try:
-        value = gdb.parse_and_eval('(char *)({})'.format(expr))
+        value = gdb.parse_and_eval(f'(char *)({expr})')
     except gdb.error:
         return None
     if int(value) == 0:
@@ -149,13 +149,13 @@ class _StepUntil(gdb.Command):
             try:
                 pc, asm, arch_name = self._current_instruction()
             except gdb.error:
-                print('{}: no running program'.format(self.name))
+                print(f'{self.name}: no running program')
                 return
             if self._matches(pc, asm, arch_name):
                 gdb.execute('x/i $pc')
                 return
             gdb.execute('stepi', to_string=True)
-        print('{}: gave up after {} instructions'.format(self.name, self.MAX_STEPS))
+        print(f'{self.name}: gave up after {self.MAX_STEPS} instructions')
 
 
 class StepToCall(_StepUntil):
@@ -238,8 +238,8 @@ class StepToAntiDebug(_StepUntil):
             # clear the trap flag (bit 8) so debugger detection can't see it.
             sp = int(gdb.selected_frame().read_register('sp'))
             try:
-                current = int(gdb.parse_and_eval('*(unsigned short *){}'.format(sp)))
-                gdb.execute('set *(unsigned short *){} = {}'.format(sp, current & 0xfeff),
+                current = int(gdb.parse_and_eval(f'*(unsigned short *){sp}'))
+                gdb.execute(f'set *(unsigned short *){sp} = {current & 0xfeff}',
                             to_string=True)
             except gdb.error:
                 pass
@@ -253,7 +253,7 @@ class StepToAntiDebug(_StepUntil):
 
 def _install(cmd_cls, label):
     cmd_cls()
-    print('The "{}" python command has been installed and is ready for use.'.format(label))
+    print(f'The "{label}" python command has been installed and is ready for use.')
 
 
 _install(PrintFlags, 'flags')
