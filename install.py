@@ -13,7 +13,7 @@ from pathlib import Path
 
 log = logging.getLogger(__name__)
 SCRIPT_DIR = Path(__file__).resolve().parent
-IGNORED_FILES = {".git", ".gitignore", ".gitmodules", Path(__file__).name}
+IGNORED_FILES = {".git", ".github", ".gitignore", ".gitmodules", Path(__file__).name}
 
 
 def parse_log_level(value):
