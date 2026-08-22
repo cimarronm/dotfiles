@@ -243,6 +243,12 @@ class ScriptedStepBase:
     def __init__(self, thread_plan, internal_dict):
         self.thread_plan = thread_plan
 
+    def _is_aarch64(self):
+        target = self.thread_plan.GetThread().GetProcess().GetTarget()
+        triple = target.GetTriple() or ''
+        arch = triple.split('-', 1)[0]
+        return 'aarch64' in arch or 'arm64' in arch or arch.startswith('arm')
+
     def explains_stop(self, event):
         ''' Returns true if this explains why the execution was halted '''
         # We are stepping, so if we stop for any other reason, it isn't
@@ -267,7 +273,13 @@ class ScriptedStepToCall(ScriptedStepBase):
         cur_pc = self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
         target = self.thread_plan.GetThread().GetProcess().GetTarget()
         instr = target.ReadInstructions(cur_pc, 1)[0]
-        if 'call' in instr.GetMnemonic(target):
+        mnemonic = instr.GetMnemonic(target)
+        # x86: call; AArch64: bl (branch-with-link) / blr (register form)
+        if self._is_aarch64():
+            is_call = mnemonic in ('bl', 'blr')
+        else:
+            is_call = 'call' in mnemonic
+        if is_call:
             self.thread_plan.SetPlanComplete(True)
             return True
         else:
