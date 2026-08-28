@@ -12,5 +12,6 @@ Diagnostics:
     Remove:
       - modernize-use-trailing-return-type
       - readability-braces-around-statements
+      - readability-else-after-return
       - readability-identifier-length
       - readability-implicit-bool-conversion
