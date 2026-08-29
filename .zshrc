@@ -19,3 +19,6 @@ fi
 if [ -f ~/.aliases ]; then
     source ~/.aliases
 fi
+
+# Keep ZLE in the standard Emacs-style keymap even if sourced tools enable vi mode.
+bindkey -e
