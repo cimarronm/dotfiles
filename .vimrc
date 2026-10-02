@@ -93,6 +93,7 @@ nnoremap <leader>gl :Git log<CR>
 " FZF mappings
 nnoremap <leader>f :Files<CR>
 nnoremap <leader>r :Rg<CR>
+nnoremap <leader>b :Buffers<CR>
 
 " Convenient command to see changes since last save
 if !exists(":DiffOrig")
