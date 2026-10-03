@@ -9,5 +9,7 @@
 	excludesfile = ~/.gitignore_global
 [pull]
 	ff = only
+[fetch]
+	all = true
 [submodule]
 	recurse = true
