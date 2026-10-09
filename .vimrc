@@ -61,6 +61,7 @@ autocmd InsertLeave,BufRead * match ExtraWhitespace /\s\+$/
 
 " General mappings
 nnoremap <leader>* :Rg <C-r><C-w><CR>
+xnoremap <leader>* y:Rg <C-R>=escape(@", '\\/.*$^~[] "''')<CR><CR>
 map <c-j> <c-w>j
 map <c-k> <c-w>k
 map <c-l> <c-w>l
