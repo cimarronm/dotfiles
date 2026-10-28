@@ -39,6 +39,12 @@ set incsearch
 set ignorecase
 set smartcase
 
+" Very magic search mappings
+nnoremap / /\v
+vnoremap / /\v
+nnoremap ? ?\v
+vnoremap ? ?\v
+
 " Editing
 set tabstop=4
 set softtabstop=4
